@@ -54,8 +54,18 @@ async def auth_middleware(request: Request, call_next):
         return RedirectResponse(url="/", status_code=307)
 
     # 保护 API
-    protected_api_paths = ("/api/upload", "/api/delete")
-    if request_path in protected_api_paths:
+    # 包含了上传、删除、文件列表、配置管理等敏感接口
+    protected_api_prefixes = (
+        "/api/upload", 
+        "/api/delete", 
+        "/api/files", 
+        "/api/batch_delete", 
+        "/api/app-config", 
+        "/api/reset-config",
+        "/api/set-password" 
+    )
+    
+    if any(request_path.startswith(prefix) for prefix in protected_api_prefixes):
         session_password = request.cookies.get(COOKIE_NAME)
         if session_password != active_password:
             return JSONResponse(
@@ -65,7 +75,7 @@ async def auth_middleware(request: Request, call_next):
 
     # 保护页面
     # 明确列出需要登录才能访问的页面
-    protected_pages = ["/", "/image_hosting", "/files"]
+    protected_pages = ["/", "/image_hosting", "/files", "/settings"]
     
     # 登录页特殊处理：如果已登录，跳转到主页
     if request_path == "/login" or request_path == "/pwd":

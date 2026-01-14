@@ -25,22 +25,8 @@ def is_web_upload_request(request: Request) -> bool:
 
 
 import re
-from pypinyin import lazy_pinyin
 
 COOKIE_NAME = "tgstate_session"
-
-def generate_slug(filename: str) -> str:
-    # 1. 转换为拼音
-    pinyin_list = lazy_pinyin(filename)
-    slug_raw = "".join(pinyin_list)
-    # 2. 只保留字母数字和连字符，且转小写
-    slug = re.sub(r'[^a-z0-9\-\.]', '', slug_raw.lower())
-    # 3. 如果 slug 太长，截断；如果太短或为空，用 default
-    if not slug:
-        slug = "file"
-    if len(slug) > 50:
-        slug = slug[:50]
-    return slug
 
 def ensure_upload_auth(request: Request, app_settings: dict, submitted_key: str | None) -> None:
     picgo_api_key = app_settings.get("PICGO_API_KEY")

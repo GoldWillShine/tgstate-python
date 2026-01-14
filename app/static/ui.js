@@ -222,22 +222,9 @@ const Utils = {
 
 // 复制文件链接的辅助函数
 window.copyLink = (shortId, fileId, filename) => {
-    let path;
-    // 如果有 shortId，优先使用 /d/{shortId}
-    // 但如果有 filename，我们希望生成 /d/{shortId}/{slug}
-    // 前端简单起见，如果后端没返回 slug，我们暂且不自己生成 slug（太麻烦），
-    // 除非我们想在这里做拼音转换。
-    // 为了稳健，如果 URL 已经存在 dataset 里，优先用 dataset 的。
-    // 这里我们只负责拼接 path。
-    
-    if (shortId && shortId !== 'None' && shortId !== '') {
-        path = `/d/${shortId}`;
-        // 如果想加上 filename (slug)，可以 append。
-        // 但前端不知道 slug。假设后端返回的 path 已经包含了 slug (如果 upload 接口改了)。
-        // 这里的 fallback 逻辑保持简单。
-    } else {
-        path = `/d/${fileId}/${encodeURIComponent(filename)}`;
-    }
+    // 回滚：只生成 /d/{id}，不带文件名/slug
+    const id = (shortId && shortId !== 'None' && shortId !== '') ? shortId : fileId;
+    const path = `/d/${id}`;
     Utils.copy(path);
 };
 

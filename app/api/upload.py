@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 import re
-from .common import ensure_upload_auth, http_error, generate_slug
+from .common import ensure_upload_auth, http_error
 
 @router.post("/api/upload")
 async def upload_file(
@@ -57,17 +57,19 @@ async def upload_file(
         logger.error("上传失败（未返回 file_id）: %s", file.filename)
         raise http_error(500, "文件上传失败。", code="upload_failed")
 
-    # 生成拼音 slug
-    slug = generate_slug(file.filename)
-    
-    # 构造短链 URL: /d/{short_id}/{slug}
+    # 构造短链 URL: /d/{short_id}
     # 这里的 file_id 实际上是 short_id
-    file_path = f"/d/{file_id}/{slug}"
+    file_path = f"/d/{file_id}"
     
     # 始终返回相对路径，前端负责拼接 origin
-    # full_url 也尽量只返回相对路径，除非必须
     full_url = file_path
 
-    logger.info("上传成功: %s -> %s (slug: %s)", file.filename, file_id, slug)
-    return {"path": file_path, "url": str(full_url), "short_id": file_id}
+    logger.info("上传成功: %s -> %s", file.filename, file_id)
+    return {
+        "file_id": file_id,          # 这里的 file_id 是用于分享的 ID (即 short_id)
+        "short_id": file_id,         # 兼容旧字段
+        "download_path": file_path,  # 用户要求的字段
+        "path": file_path,           # 兼容旧字段
+        "url": str(full_url)         # 兼容旧字段
+    }
 
