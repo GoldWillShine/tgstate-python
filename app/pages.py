@@ -4,10 +4,25 @@ from starlette.templating import Jinja2Templates
 from urllib.parse import quote
 
 from . import database
-from .core.config import get_active_password, get_settings
+from .core.config import get_active_password, get_app_settings
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+
+
+def _page_cfg(request: Request) -> dict:
+    cfg = get_app_settings()
+    bot_token = (cfg.get("BOT_TOKEN") or "").strip()
+    channel = (cfg.get("CHANNEL_NAME") or "").strip()
+    bot_ready = bool(bot_token and channel)
+    missing = []
+    if not bot_token:
+        missing.append("BOT_TOKEN")
+    if not channel:
+        missing.append("CHANNEL_NAME")
+
+    bot_running = bool(getattr(request.app.state, "bot_app", None))
+    return {"bot_ready": bot_ready, "bot_running": bot_running, "missing": missing}
 @router.get("/", response_class=HTMLResponse)
 async def main_page(request: Request):
     """
@@ -15,7 +30,7 @@ async def main_page(request: Request):
     权限验证已移至全局中间件。
     """
     files = database.get_all_files()
-    return templates.TemplateResponse("index.html", {"request": request, "files": files})
+    return templates.TemplateResponse("index.html", {"request": request, "files": files, "cfg": _page_cfg(request)})
 
 
 @router.get("/settings", response_class=HTMLResponse)
@@ -24,7 +39,7 @@ async def settings_page(request: Request):
     提供设置页面，用于更改密码。
     权限验证已移至全局中间件。
     """
-    return templates.TemplateResponse("settings.html", {"request": request})
+    return templates.TemplateResponse("settings.html", {"request": request, "cfg": _page_cfg(request)})
 
 @router.get("/pwd", response_class=HTMLResponse)
 async def get_password_page(request: Request):
@@ -60,7 +75,10 @@ async def image_hosting_page(request: Request):
         file for file in all_files 
         if file["filename"].lower().endswith(image_extensions)
     ]
-    return templates.TemplateResponse("image_hosting.html", {"request": request, "files": files})
+    return templates.TemplateResponse(
+        "image_hosting.html",
+        {"request": request, "files": files, "cfg": _page_cfg(request)},
+    )
 
 
 @router.get("/share/{file_id}", response_class=HTMLResponse)
@@ -73,9 +91,10 @@ async def share_page(request: Request, file_id: str):
         return templates.TemplateResponse("error.html", {"request": request, "message": "File not found!"}, status_code=404)
 
     # 构建完整的文件URL
-    base_url = str(request.base_url)
+    cfg = get_app_settings()
+    base_url = (cfg.get("BASE_URL") or "").strip() or str(request.base_url).rstrip("/")
     encoded_filename = quote(file_info["filename"])
-    file_url = f"{base_url}d/{file_id}/{encoded_filename}"
+    file_url = f"{base_url}/d/{file_id}/{encoded_filename}"
 
     # 准备传递给模板的数据
     file_data = {

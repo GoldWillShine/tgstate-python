@@ -26,30 +26,6 @@ app = FastAPI(
 )
 
 @app.middleware("http")
-async def setup_middleware(request: Request, call_next):
-    setup_required = bool(getattr(request.app.state, "setup_required", False))
-    if not setup_required:
-        return await call_next(request)
-
-    path = request.url.path
-    allowed_prefixes = ("/static",)
-    allowed_exact = ("/settings", "/api/app-config", "/api/reset-config")
-
-    if path == "/":
-        return RedirectResponse(url="/settings", status_code=307)
-
-    if path in allowed_exact or path.startswith(allowed_prefixes):
-        return await call_next(request)
-
-    if path.startswith("/api") or path.startswith("/d"):
-        return JSONResponse(
-            status_code=503,
-            content={"detail": error_payload("请先完成设置", code="setup_required")},
-        )
-
-    return RedirectResponse(url="/settings", status_code=307)
-
-@app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     """
     一个全局中间件，用于处理所有页面的访问权限。
@@ -61,7 +37,15 @@ async def auth_middleware(request: Request, call_next):
         return await call_next(request)
 
     request_path = request.url.path
-    protected_api_paths = ("/api/app-config", "/api/reset-config", "/api/set-password")
+    protected_api_paths = (
+        "/api/app-config",
+        "/api/app-config/save",
+        "/api/app-config/apply",
+        "/api/reset-config",
+        "/api/set-password",
+        "/api/verify/bot",
+        "/api/verify/channel",
+    )
     if request_path in protected_api_paths:
         session_password = request.cookies.get("password")
         if session_password != active_password:

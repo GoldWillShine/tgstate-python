@@ -191,10 +191,6 @@ h1 {
     transition: color 0.2s ease;
 }
 
-.upload-area-dashed:hover i {
-    color: var(--accent-color);
-}
-
 .upload-area-dashed p {
     color: var(--text-secondary);
     font-size: var(--font-size-base);
@@ -206,7 +202,7 @@ h1 {
 }
 
 /* Progress & Upload List */
-.progress-area, .uploaded-area {
+.progress-area, .done-area {
     margin-top: var(--spacing-md);
 }
 

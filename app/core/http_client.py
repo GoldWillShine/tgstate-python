@@ -14,12 +14,8 @@ logger = logging.getLogger(__name__)
 # 这个变量将持有我们全局共享的客户端实例
 http_client: httpx.AsyncClient | None = None
 
-def _is_setup_required(app_settings: dict) -> bool:
-    return not (
-        (app_settings.get("BOT_TOKEN") or "").strip()
-        and (app_settings.get("CHANNEL_NAME") or "").strip()
-        and (app_settings.get("PASS_WORD") or "").strip()
-    )
+def _is_bot_ready(app_settings: dict) -> bool:
+    return bool((app_settings.get("BOT_TOKEN") or "").strip() and (app_settings.get("CHANNEL_NAME") or "").strip())
 
 async def _stop_bot(app: FastAPI) -> None:
     if hasattr(app.state, "bot_app") and app.state.bot_app:
@@ -47,18 +43,26 @@ async def _start_bot(app: FastAPI, app_settings: dict) -> None:
     await bot_app.updater.start_polling(drop_pending_updates=True)
     logger.info("机器人已在后台启动")
 
-async def apply_runtime_settings(app: FastAPI) -> None:
+async def apply_runtime_settings(app: FastAPI, *, start_bot: bool = True) -> None:
     async with app.state.settings_lock:
         current = get_app_settings()
         app.state.app_settings = current
-        setup_required = _is_setup_required(current)
-        app.state.setup_required = setup_required
+        bot_ready = _is_bot_ready(current)
+        app.state.bot_ready = bot_ready
+        app.state.bot_error = None
 
-        if setup_required:
-            await _stop_bot(app)
+        if not start_bot:
             return
 
-        await _start_bot(app, current)
+        if bot_ready:
+            try:
+                await _start_bot(app, current)
+            except Exception as e:
+                logger.error("应用配置已应用，但启动机器人失败: %s", e)
+                app.state.bot_error = str(e)
+                await _stop_bot(app)
+        else:
+            await _stop_bot(app)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -81,7 +85,7 @@ async def lifespan(app: FastAPI):
 
     app.state.settings_lock = asyncio.Lock()
     app.state.app_settings = get_app_settings()
-    app.state.setup_required = _is_setup_required(app.state.app_settings)
+    app.state.bot_ready = _is_bot_ready(app.state.app_settings)
 
     # 2. 创建共享的 httpx.AsyncClient
     global http_client
@@ -89,14 +93,14 @@ async def lifespan(app: FastAPI):
     http_client = httpx.AsyncClient(timeout=300.0, limits=limits)
     logger.info("共享的 HTTP 客户端已创建")
 
-    # 3. 启动 Telegram Bot（仅在配置完成后）
-    if not app.state.setup_required:
+    # 3. 启动 Telegram Bot（仅在 BOT_TOKEN + CHANNEL_NAME 都存在时）
+    if app.state.bot_ready:
         try:
             await _start_bot(app, app.state.app_settings)
         except Exception as e:
             logger.error("启动机器人失败: %s", e)
             app.state.bot_app = None
-            app.state.setup_required = True
+            app.state.bot_error = str(e)
 
     yield # 应用在此处运行
 

@@ -10,7 +10,7 @@ from urllib.parse import quote
 from fastapi import APIRouter, Depends, File, Form, Header, UploadFile, Request
 
 from ..core.config import Settings, get_app_settings, get_settings
-from ..services.telegram_service import TelegramService, get_telegram_service
+from ..services.telegram_service import get_telegram_service
 from .common import ensure_upload_auth, http_error
 
 
@@ -24,10 +24,11 @@ async def upload_file(
     file: UploadFile = File(...),
     key: Optional[str] = Form(None),
     settings: Settings = Depends(get_settings),
-    telegram_service: TelegramService = Depends(get_telegram_service),
     x_api_key: Optional[str] = Header(None),
 ):
     app_settings = get_app_settings()
+    if not (app_settings.get("BOT_TOKEN") or "").strip() or not (app_settings.get("CHANNEL_NAME") or "").strip():
+        raise http_error(503, "缺少 BOT_TOKEN 或 CHANNEL_NAME，无法上传", code="cfg_missing")
     ensure_upload_auth(request, app_settings, x_api_key or key)
     logger.info("开始上传: %s", file.filename)
 
@@ -37,6 +38,7 @@ async def upload_file(
             temp_file_path = temp_file.name
             shutil.copyfileobj(file.file, temp_file)
 
+        telegram_service = get_telegram_service()
         file_id = await telegram_service.upload_file(temp_file_path, file.filename)
     except Exception as e:
         logger.error("上传失败: %s: %s", file.filename, e)

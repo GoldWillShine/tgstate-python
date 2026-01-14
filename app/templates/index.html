@@ -4,27 +4,42 @@
 
 {% block content %}
 <div class="container">
+    {% if not cfg.bot_ready %}
+    <div class="ui-card ui-empty" style="margin-bottom: 14px;">
+        <h2>功能未启用</h2>
+        <p>上传/下载/删除需要配置 BOT_TOKEN 与 CHANNEL_NAME。</p>
+        {% if cfg.missing %}
+        <ul>
+            {% for item in cfg.missing %}
+            <li>{{ item }} 未填写</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        <div class="ui-btns" style="margin-top: 12px;">
+            <a class="ui-btn primary" href="/settings">去 Settings</a>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Clean Upload Area -->
     <div class="upload-container">
-        <div class="upload-area-dashed" id="upload-area">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <p>Drag files here or <span>Browse</span></p>
-            <input type="file" id="file-input" hidden multiple>
+        <div class="upload-area-dashed" id="upload-zone" data-bot-ready="{{ 1 if cfg.bot_ready else 0 }}">
+            <p>拖拽文件到这里，或 <span>选择文件</span></p>
+            <input type="file" id="file-picker" hidden multiple>
         </div>
-        <div class="progress-area" id="progress-area"></div>
-        <div class="uploaded-area" id="uploaded-area"></div>
+        <div class="progress-area" id="prog-zone"></div>
+        <div class="done-area" id="done-zone"></div>
     </div>
 
     <!-- Controls: Search & Batch Actions -->
     <div class="controls-bar">
         <div class="search-container">
-            <i class="fas fa-search search-icon"></i>
             <input type="text" id="file-search" placeholder="Search files..." class="search-input">
         </div>
         <div class="batch-actions">
             <span id="selection-counter" class="text-muted" style="font-size: 0.875rem; margin-right: 8px;"></span>
-            <button id="copy-links-btn" class="btn" disabled><i class="fas fa-link"></i> Copy Links</button>
-            <button id="batch-delete-btn" class="btn btn-danger" disabled><i class="fas fa-trash-alt"></i> Delete</button>
+            <button id="copy-links-btn" class="btn" disabled>Copy Links</button>
+            <button id="batch-delete-btn" class="btn btn-danger" disabled>Delete</button>
         </div>
     </div>
 
@@ -45,21 +60,19 @@
                         <input type="checkbox" class="file-checkbox" data-file-id="{{ file.file_id }}">
                     </div>
                     <div class="col-name">
-                        <i class="fas fa-file-alt"></i>
                         <span title="{{ file.filename }}">{{ file.filename }}</span>
                     </div>
                     <div class="col-size">{{ "%.2f" | format(file.filesize / (1024*1024)) }} MB</div>
                     <div class="col-date">{{ file.upload_date.split(' ')[0] }}</div>
                     <div class="col-actions">
-                        <a href="/d/{{ file.file_id }}/{{ file.filename }}" class="action-btn" data-tooltip="Download"><i class="fas fa-download"></i></a>
-                        <button class="action-btn copy-link-btn" data-tooltip="Copy Link" onclick="copyLink('/d/{{ file.file_id }}/{{ file.filename }}')"><i class="fas fa-link"></i></button>
-                        <button class="action-btn delete" data-tooltip="Delete" onclick="deleteFile('{{ file.file_id }}')"><i class="fas fa-trash-alt"></i></button>
+                        <a href="/d/{{ file.file_id }}/{{ file.filename }}" class="action-btn" data-tooltip="Download">Download</a>
+                        <button class="action-btn copy-link-btn" data-tooltip="Copy Link" onclick="copyLink('/d/{{ file.file_id }}/{{ file.filename }}')">Copy</button>
+                        <button class="action-btn delete" data-tooltip="Delete" onclick="deleteFile('{{ file.file_id }}')">Delete</button>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
                 <div style="padding: 40px; text-align: center; color: var(--text-tertiary);">
-                    <i class="fas fa-folder-open" style="font-size: 48px; margin-bottom: 16px;"></i>
                     <p>No files found</p>
                 </div>
             {% endif %}

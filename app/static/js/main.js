@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Global Variables ---
-    const uploadArea = document.getElementById('upload-area');
-    const fileInput = document.getElementById('file-input');
-    const progressArea = document.getElementById('progress-area');
-    const uploadedArea = document.getElementById('uploaded-area');
+    const uploadArea = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('file-picker');
+    const progressArea = document.getElementById('prog-zone');
+    const doneArea = document.getElementById('done-zone');
     const searchInput = document.getElementById('file-search');
     
     // --- Search Functionality ---
@@ -25,7 +25,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Upload Logic ---
     if (uploadArea && fileInput) {
-        uploadArea.addEventListener('click', () => fileInput.click());
+        const botReady = uploadArea.dataset && uploadArea.dataset.botReady === '1';
+
+        uploadArea.addEventListener('click', () => {
+            if (!botReady) {
+                if (typeof showToast === 'function') showToast('请先在 Settings 填写 BOT_TOKEN 与 CHANNEL_NAME。', 'error');
+                return;
+            }
+            fileInput.click();
+        });
 
         uploadArea.addEventListener('dragover', (event) => {
             event.preventDefault();
@@ -39,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         uploadArea.addEventListener('drop', (event) => {
             event.preventDefault();
             uploadArea.classList.remove('active');
+            if (!botReady) return;
             const files = event.dataTransfer.files;
             if (files.length > 0) {
                 handleFiles(files);
@@ -46,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         fileInput.addEventListener('change', ({ target }) => {
+            if (!botReady) return;
             if (target.files.length > 0) {
                 handleFiles(target.files);
             }
@@ -60,8 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear previous progress if needed, or keep history? 
         // Let's keep history for this session but maybe clear if it gets too long?
         // For now, simple behavior:
-        progressArea.innerHTML = ''; 
-        // uploadedArea.innerHTML = ''; // Optional: keep uploaded history
+        if (progressArea) progressArea.innerHTML = ''; 
+        // doneArea.innerHTML = ''; // Optional: keep uploaded history
         
         for (const file of files) {
             uploadQueue.push(file);
@@ -93,14 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const progressHTML = `
                 <div class="upload-row" id="progress-${fileId}">
                     <div class="content">
-                        <i class="fas fa-file-upload text-muted"></i>
                         <div class="details">
                             <span class="name">${file.name}</span>
                             <div class="progress-bar"><div class="progress" style="width: 0%"></div></div>
                         </div>
                     </div>
                 </div>`;
-            progressArea.insertAdjacentHTML('beforeend', progressHTML);
+            if (progressArea) progressArea.insertAdjacentHTML('beforeend', progressHTML);
             const progressBar = document.querySelector(`#progress-${fileId} .progress`);
 
             xhr.upload.onprogress = ({ loaded, total }) => {
@@ -118,15 +127,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const successHTML = `
                         <div class="upload-row">
                             <div class="content">
-                                <i class="fas fa-check-circle" style="color: var(--success-color)"></i>
                                 <div class="details">
                                     <span class="name">${file.name}</span>
                                     <span class="status"><a href="${fileUrl}" target="_blank">${fileUrl}</a></span>
                                 </div>
                             </div>
-                            <button class="action-btn" onclick="copyLink('${fileUrl}')" data-tooltip="Copy"><i class="fas fa-copy"></i></button>
+                            <button class="action-btn" onclick="copyLink('${fileUrl}')" data-tooltip="Copy">Copy</button>
                         </div>`;
-                    uploadedArea.insertAdjacentHTML('afterbegin', successHTML);
+                    if (doneArea) doneArea.insertAdjacentHTML('afterbegin', successHTML);
                 } else {
                     let errorMsg = "Upload Failed";
                     try {
@@ -144,14 +152,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const errorHTML = `
                         <div class="upload-row" style="border-color: var(--danger-color)">
                             <div class="content">
-                                <i class="fas fa-exclamation-circle" style="color: var(--danger-color)"></i>
                                 <div class="details">
                                     <span class="name">${file.name}</span>
                                     <span class="status" style="color: var(--danger-color)">${errorMsg}</span>
                                 </div>
                             </div>
                         </div>`;
-                    uploadedArea.insertAdjacentHTML('afterbegin', errorHTML);
+                    if (doneArea) doneArea.insertAdjacentHTML('afterbegin', errorHTML);
                 }
                 resolve();
             };
@@ -328,8 +335,8 @@ document.addEventListener('DOMContentLoaded', () => {
          const fileUrl = `/d/${file.file_id}/${encodeURIComponent(file.filename)}`;
 
         let html = '';
-        if (isGridView) {
-             html = `
+                if (isGridView) {
+                     html = `
                 <div class="image-card file-item-disk" id="file-item-${safeId}" data-file-id="${file.file_id}" data-file-url="${fileUrl}" data-filename="${file.filename}">
                     <div class="image-thumb-wrapper">
                         <img src="${fileUrl}" loading="lazy" class="image-thumb" alt="${file.filename}">
@@ -342,8 +349,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="image-meta">${formattedSize}</div>
                     </div>
                     <div class="image-actions">
-                        <button class="action-btn copy-link-btn" data-tooltip="Copy" onclick="copyLink('${fileUrl}')"><i class="fas fa-link"></i></button>
-                        <button class="action-btn delete" data-tooltip="Delete" onclick="deleteFile('${file.file_id}')"><i class="fas fa-trash-alt"></i></button>
+                        <button class="action-btn copy-link-btn" data-tooltip="Copy" onclick="copyLink('${fileUrl}')">Copy</button>
+                        <button class="action-btn delete" data-tooltip="Delete" onclick="deleteFile('${file.file_id}')">Delete</button>
                     </div>
                 </div>`;
         } else {
@@ -353,15 +360,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         <input type="checkbox" class="file-checkbox" data-file-id="${file.file_id}">
                     </div>
                     <div class="col-name">
-                        <i class="fas fa-file-alt"></i>
                         <span title="${file.filename}">${file.filename}</span>
                     </div>
                     <div class="col-size">${formattedSize}</div>
                     <div class="col-date">${formattedDate}</div>
                     <div class="col-actions">
-                        <a href="${fileUrl}" class="action-btn" data-tooltip="Download"><i class="fas fa-download"></i></a>
-                        <button class="action-btn copy-link-btn" data-tooltip="Copy Link" onclick="copyLink('${fileUrl}')"><i class="fas fa-link"></i></button>
-                        <button class="action-btn delete" data-tooltip="Delete" onclick="deleteFile('${file.file_id}')"><i class="fas fa-trash-alt"></i></button>
+                        <a href="${fileUrl}" class="action-btn" data-tooltip="Download">Download</a>
+                        <button class="action-btn copy-link-btn" data-tooltip="Copy Link" onclick="copyLink('${fileUrl}')">Copy</button>
+                        <button class="action-btn delete" data-tooltip="Delete" onclick="deleteFile('${file.file_id}')">Delete</button>
                     </div>
                 </div>`;
         }
@@ -379,6 +385,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.deleteFile = (fileId) => {
+        const zone = document.getElementById('upload-zone');
+        const botReady = zone && zone.dataset && zone.dataset.botReady === '1';
+        if (!botReady) {
+            showToast('请先在 Settings 填写 BOT_TOKEN 与 CHANNEL_NAME。', 'error');
+            return;
+        }
         if (!confirm('Delete this file?')) return;
         fetch(`/api/files/${fileId}`, { method: 'DELETE' })
             .then(async (res) => {
@@ -407,23 +419,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (container && container.children.length === 0) {
             container.innerHTML = `
                 <div style="padding: 40px; text-align: center; color: var(--text-tertiary);">
-                    <i class="fas fa-folder-open" style="font-size: 48px; margin-bottom: 16px;"></i>
                     <p>No files found</p>
                 </div>`;
         }
     }
 
     function showToast(msg, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.textContent = msg;
-        document.body.appendChild(toast);
-        // Trigger reflow
-        toast.offsetHeight;
-        toast.classList.add('show');
+        const t = document.createElement('div');
+        t.className = 'ui-toast';
+        t.textContent = msg;
+        document.body.appendChild(t);
         setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
+            try { t.remove(); } catch (_) {}
+        }, 2600);
     }
 });

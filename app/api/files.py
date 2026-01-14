@@ -25,9 +25,13 @@ logger = logging.getLogger(__name__)
 async def download_file(
     file_id: str,
     filename: str,
-    telegram_service: TelegramService = Depends(get_telegram_service),
     client: httpx.AsyncClient = Depends(get_http_client),
 ):
+    try:
+        telegram_service = get_telegram_service()
+    except Exception:
+        raise http_error(503, "未配置 BOT_TOKEN/CHANNEL_NAME，下载不可用", code="cfg_missing")
+
     try:
         _, real_file_id = file_id.split(":", 1)
     except ValueError:
@@ -92,8 +96,12 @@ async def get_files_list():
 @router.delete("/api/files/{file_id}")
 async def delete_file(
     file_id: str,
-    telegram_service: TelegramService = Depends(get_telegram_service),
 ):
+    try:
+        telegram_service = get_telegram_service()
+    except Exception:
+        raise http_error(503, "未配置 BOT_TOKEN/CHANNEL_NAME，删除不可用", code="cfg_missing")
+
     logger.info("请求删除文件: %s", file_id)
     delete_result = await telegram_service.delete_file_with_chunks(file_id)
 

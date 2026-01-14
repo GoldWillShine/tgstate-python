@@ -3,25 +3,29 @@
 {% block title %}Password Required{% endblock %}
 
 {% block content %}
-<div class="login-container">
-    <div class="login-box">
-        <div class="login-icon">
-            <i class="fas fa-shield-alt"></i>
+<div class="ui-shell">
+  <div class="ui-card ui-card-pad" style="max-width: 520px; margin: 0 auto;">
+    <h1 class="ui-title">需要登录</h1>
+    <p class="ui-sub">输入 PASS_WORD 继续访问。</p>
+
+    <form action="/pwd" method="post" style="margin-top: 14px;">
+      <div class="ui-field">
+        <div class="ui-label">
+          <div>
+            <div class="ui-label-main">密码</div>
+            <div class="ui-label-sub">用于 Web 登录</div>
+          </div>
         </div>
-        <h1>访问受限</h1>
-        <p class="subtitle">此页面需要密码才能访问</p>
-        
-        <form action="/pwd" method="post" class="login-form">
-            <div class="form-group">
-                <i class="fas fa-key form-icon"></i>
-                <input type="password" name="password" id="password" placeholder="请输入密码" required>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block">进入</button>
-            
-            {% if request.query_params.get('error') %}
-            <p class="error-message">密码错误，请重试！</p>
-            {% endif %}
-        </form>
-    </div>
+        <input class="ui-in" type="password" name="password" id="password" placeholder="请输入密码" required>
+        {% if request.query_params.get('error') %}
+        <div class="ui-help" style="color: var(--ui-danger);">密码错误，请重试。</div>
+        {% endif %}
+      </div>
+      <div class="ui-btns" style="margin-top: 14px;">
+        <button type="submit" class="ui-btn primary">进入</button>
+        <a href="/settings" class="ui-btn weak">去 Settings</a>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}
