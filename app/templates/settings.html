@@ -3,182 +3,235 @@
 {% block title %}Settings - tgState{% endblock %}
 
 {% block content %}
-<div class="ui-shell" id="ui-settings">
-  <div class="ui-row" style="align-items: center; justify-content: space-between;">
-    <div>
-      <h1 class="ui-title">Settings / Setup</h1>
-      <p class="ui-sub">所有项都可跳过；支持部分保存，随时补全。</p>
-    </div>
-    <div class="ui-btns">
-      <span class="ui-pill" id="cfg-pill">配置：—</span>
-      <span class="ui-pill" id="bot-pill">Bot：—</span>
-    </div>
-  </div>
+<div style="max-width: 700px; margin: 0 auto;">
+    <h1 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Setup tgState</h1>
+    <p style="color: var(--text-secondary); margin-bottom: 32px;">Configure your Telegram bot and storage settings.</p>
 
-  <div class="ui-card ui-card-pad" style="margin-top: 14px;">
-    <div class="ui-kv">
-      <div>
-        <div class="ui-k">当前访问来源</div>
-        <div class="ui-v" id="site-origin">—</div>
-      </div>
-      <div>
-        <div class="ui-k">进度</div>
-        <div class="ui-v" id="step-count">0/3</div>
-      </div>
-      <div>
-        <div class="ui-k">说明</div>
-        <div class="ui-v" style="font-weight: 600; color: var(--ui-muted);">保存不一定启用；应用才会启停 Bot</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="ui-card ui-card-pad" style="margin-top: 14px;">
-    <div class="ui-row" style="align-items: center; justify-content: space-between;">
-      <div>
-        <div class="ui-title" style="font-size: 18px;">三步引导</div>
-        <div class="ui-note">全部可跳过，后续可再补全。</div>
-      </div>
+    <!-- Stepper -->
+    <div class="stepper" id="stepper">
+        <div class="step active" data-step="1">
+            <div class="step-circle">1</div>
+            <div class="step-title">Security</div>
+        </div>
+        <div class="step" data-step="2">
+            <div class="step-circle">2</div>
+            <div class="step-title">Telegram</div>
+        </div>
+        <div class="step" data-step="3">
+            <div class="step-circle">3</div>
+            <div class="step-title">Connect</div>
+        </div>
     </div>
 
-    <div class="ui-step" style="margin-top: 12px;">
-      <div class="ui-step-item" id="step-1" data-done="0">
-        <div><span class="ui-step-num">1</span><span class="ui-step-name">基础</span></div>
-        <div class="ui-step-note">BOT_TOKEN / CHANNEL_NAME</div>
-      </div>
-      <div class="ui-step-item" id="step-2" data-done="0">
-        <div><span class="ui-step-num">2</span><span class="ui-step-name">访问</span></div>
-        <div class="ui-step-note">PASS_WORD / BASE_URL</div>
-      </div>
-      <div class="ui-step-item" id="step-3" data-done="0">
-        <div><span class="ui-step-num">3</span><span class="ui-step-name">上传</span></div>
-        <div class="ui-step-note">PICGO_API_KEY</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="ui-row" style="margin-top: 14px;">
-    <div class="ui-card ui-card-pad" style="flex: 1; min-width: 320px;">
-      <div class="ui-title" style="font-size: 18px;">Step 1：基础</div>
-      <div class="ui-note" style="margin-top: 6px;">Bot 只有在 BOT_TOKEN + CHANNEL_NAME 都存在且点击“保存并应用”后才会启动。</div>
-
-      <div class="ui-form" style="margin-top: 12px;">
-        <div class="ui-field">
-          <div class="ui-label">
-            <div>
-              <div class="ui-label-main">BOT_TOKEN</div>
-              <div class="ui-label-sub">用于访问 Telegram Bot API</div>
+    <form id="settings-form" onsubmit="return false;">
+        <!-- Step 1: Security -->
+        <div class="step-content" data-step="1">
+            <div class="card">
+                <div class="input-group">
+                    <label class="input-label">Admin Password <span style="color: var(--danger-color)">*</span></label>
+                    <div style="position: relative;">
+                        <input type="password" class="input-field" name="PASS_WORD" id="PASS_WORD" placeholder="Set a strong password">
+                        <button type="button" onclick="togglePwd('PASS_WORD')" style="position: absolute; right: 12px; top: 12px; color: var(--text-tertiary);">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
+                    <div class="text-sm text-muted mt-2">Required to access files and images.</div>
+                </div>
             </div>
-            <div class="ui-btns">
-              <span class="ui-pill" id="bot-token-mark">—</span>
-              <span class="ui-label-sub" id="token-saved">—</span>
-              <button type="button" class="ui-btn ui-mini" id="test-bot">测试</button>
+            <div class="flex-between">
+                <div></div>
+                <button class="btn btn-primary" onclick="nextStep(2)">Next: Telegram <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
             </div>
-          </div>
-          <input class="ui-in" id="bot-token" type="password" placeholder="123456:ABC..." autocomplete="off">
-          <div class="ui-help" id="bot-token-help">—</div>
         </div>
 
-        <div class="ui-field">
-          <div class="ui-label">
-            <div>
-              <div class="ui-label-main">CHANNEL_NAME</div>
-              <div class="ui-label-sub">@username 或 -100...</div>
+        <!-- Step 2: Telegram -->
+        <div class="step-content hidden" data-step="2">
+            <div class="card">
+                <div class="input-group">
+                    <label class="input-label">Bot Token</label>
+                    <input type="text" class="input-field" name="BOT_TOKEN" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11">
+                    <div class="text-sm text-muted mt-2">Get this from @BotFather</div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Channel Name</label>
+                    <input type="text" class="input-field" name="CHANNEL_NAME" placeholder="@my_channel or -100xxxxxxxx">
+                    <div class="text-sm text-muted mt-2">Add your bot to this channel as Admin.</div>
+                </div>
+                
+                <div style="margin-top: 16px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="testBot()" id="btn-test-bot">Test Connection</button>
+                </div>
             </div>
-            <div class="ui-btns">
-              <span class="ui-pill" id="chan-mark">—</span>
-              <span class="ui-label-sub" id="chan-saved">—</span>
-              <button type="button" class="ui-btn ui-mini" id="test-chan">测试</button>
+            <div class="flex-between">
+                <button class="btn btn-ghost" onclick="prevStep(1)">Back</button>
+                <button class="btn btn-primary" onclick="nextStep(3)">Next: Connect</button>
             </div>
-          </div>
-          <input class="ui-in" id="chan-name" type="text" placeholder="@my_channel 或 -100123..." autocomplete="off">
-          <div class="ui-help" id="chan-help">—</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="ui-card ui-card-pad" style="flex: 1; min-width: 320px;">
-      <div class="ui-title" style="font-size: 18px;">Step 2：访问</div>
-      <div class="ui-note" style="margin-top: 6px;">PASS_WORD 用于 Web 登录（可空）；BASE_URL 用于生成分享链接（可空）。</div>
-
-      <div class="ui-form" style="margin-top: 12px;">
-        <div class="ui-field">
-          <div class="ui-label">
-            <div>
-              <div class="ui-label-main">PASS_WORD</div>
-              <div class="ui-label-sub">不设置则不启用登录保护</div>
-            </div>
-            <div class="ui-btns">
-              <span class="ui-label-sub" id="pass-saved">—</span>
-              <button type="button" class="ui-btn ui-mini" id="pass-eye">显示/隐藏</button>
-            </div>
-          </div>
-          <input class="ui-in" id="pass-word" type="password" placeholder="输入登录密码（可留空）" autocomplete="new-password">
-          <div class="ui-help">留空保存不会改变现有密码；需要清空请使用重置。</div>
         </div>
 
-        <div class="ui-field">
-          <div class="ui-label">
-            <div>
-              <div class="ui-label-main">BASE_URL</div>
-              <div class="ui-label-sub">留空则默认使用当前访问来源</div>
+        <!-- Step 3: Connect -->
+        <div class="step-content hidden" data-step="3">
+            <div class="card">
+                <div class="input-group">
+                    <label class="input-label">Base URL</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="input-field" name="BASE_URL" id="BASE_URL" placeholder="http://your-domain.com">
+                        <button type="button" class="btn btn-secondary" onclick="fillOrigin()">Use Current</button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">PicGo API Key</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="input-field" name="PICGO_API_KEY" id="PICGO_API_KEY" placeholder="Optional API Key">
+                        <button type="button" class="btn btn-secondary" onclick="genKey()">Generate</button>
+                    </div>
+                </div>
             </div>
-            <div class="ui-btns">
-              <span class="ui-pill" id="base-mark">—</span>
-              <span class="ui-label-sub" id="base-saved">—</span>
-              <button type="button" class="ui-btn ui-mini" id="use-origin">一键使用当前来源</button>
+            <div class="flex-between">
+                <button class="btn btn-ghost" onclick="prevStep(2)">Back</button>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-secondary" onclick="saveConfig(false)" id="btn-save">Save Draft</button>
+                    <button class="btn btn-primary" onclick="saveConfig(true)" id="btn-finish">Finish & Enable</button>
+                </div>
             </div>
-          </div>
-          <input class="ui-in" id="base-url" type="text" placeholder="https://example.com（可留空）" autocomplete="off">
-          <div class="ui-help" id="base-help">—</div>
         </div>
-      </div>
-    </div>
-  </div>
+    </form>
 
-  <div class="ui-card ui-card-pad" style="margin-top: 14px;">
-    <div class="ui-title" style="font-size: 18px;">Step 3：上传</div>
-    <div class="ui-note" style="margin-top: 6px;">PICGO_API_KEY 用于 API 上传鉴权（可空）。</div>
-
-    <div class="ui-form" style="margin-top: 12px;">
-      <div class="ui-field">
-        <div class="ui-label">
-          <div>
-            <div class="ui-label-main">PICGO_API_KEY</div>
-            <div class="ui-label-sub">可选：用于 PicGo / API 上传</div>
-          </div>
-          <div class="ui-btns">
-            <span class="ui-label-sub" id="key-saved">—</span>
-            <button type="button" class="ui-btn ui-mini" id="key-gen">生成</button>
-            <button type="button" class="ui-btn ui-mini" id="key-copy">复制</button>
-          </div>
-        </div>
-        <input class="ui-in" id="picgo-key" type="password" placeholder="留空则不启用 API Key 策略" autocomplete="off">
-        <div class="ui-help">留空保存不会改变现有值；需要清空请使用重置。</div>
-      </div>
+    <!-- Danger Zone -->
+    <div style="margin-top: 64px; border-top: 1px solid var(--border-color); padding-top: 32px;">
+        <h3 style="font-size: 16px; font-weight: 600; color: var(--danger-color); margin-bottom: 16px;">Danger Zone</h3>
+        <button class="btn" style="color: var(--danger-color); border: 1px solid var(--border-color);" onclick="resetConfig()">Reset Configuration</button>
     </div>
-  </div>
-
-  <div class="ui-card ui-card-pad" style="margin-top: 14px;">
-    <div class="ui-title" style="font-size: 18px;">操作</div>
-    <div class="ui-note" style="margin-top: 6px;">“保存并应用”会根据当前配置启停 Bot；“仅保存”不会触发任何启停动作。</div>
-    <div class="ui-btns" style="margin-top: 12px;">
-      <button type="button" class="ui-btn primary" id="btn-apply">保存并应用</button>
-      <button type="button" class="ui-btn weak" id="btn-save">仅保存</button>
-    </div>
-  </div>
-
-  <div class="ui-card ui-card-pad" style="margin-top: 14px;">
-    <div class="ui-title" style="font-size: 18px; color: var(--ui-danger);">危险区</div>
-    <div class="ui-note" style="margin-top: 6px;">重置会清空已保存的所有设置。</div>
-    <div class="ui-btns" style="margin-top: 12px;">
-      <button type="button" class="ui-btn danger" id="btn-reset">重置配置</button>
-    </div>
-  </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('nav-settings')?.classList.add('active');
-});
+let currentStep = 1;
+
+function initData() {
+    // Load existing config
+    fetch('/api/app-config')
+        .then(r => r.json())
+        .then(data => {
+            for (let k in data) {
+                const el = document.getElementsByName(k)[0];
+                if (el) el.value = data[k] || '';
+            }
+        });
+}
+
+function updateStepper(step) {
+    document.querySelectorAll('.step').forEach(el => {
+        const s = parseInt(el.dataset.step);
+        el.classList.toggle('active', s === step);
+        el.classList.toggle('completed', s < step);
+    });
+    
+    document.querySelectorAll('.step-content').forEach(el => {
+        el.classList.toggle('hidden', parseInt(el.dataset.step) !== step);
+    });
+}
+
+function nextStep(step) {
+    // Basic validation for step 1
+    if (currentStep === 1 && step === 2) {
+        const pwd = document.getElementById('PASS_WORD').value;
+        if (!pwd) {
+            Toast.show('Password is required', 'error');
+            return;
+        }
+    }
+    currentStep = step;
+    updateStepper(step);
+}
+
+function prevStep(step) {
+    currentStep = step;
+    updateStepper(step);
+}
+
+function togglePwd(id) {
+    const el = document.getElementById(id);
+    el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+function fillOrigin() {
+    document.getElementById('BASE_URL').value = window.location.origin;
+}
+
+function genKey() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 32; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+    document.getElementById('PICGO_API_KEY').value = result;
+}
+
+async function saveConfig(apply = false) {
+    const btn = document.getElementById(apply ? 'btn-finish' : 'btn-save');
+    Utils.setLoading(btn, true);
+    
+    const form = document.getElementById('settings-form');
+    const data = Object.fromEntries(new FormData(form));
+    
+    try {
+        const url = apply ? '/api/app-config/apply' : '/api/app-config/save';
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        
+        if (res.ok) {
+            Toast.show(apply ? 'Configuration applied!' : 'Saved successfully');
+            if (apply) {
+                setTimeout(() => window.location.href = '/', 1000);
+            }
+        } else {
+            Toast.show(json.detail?.message || 'Error saving config', 'error');
+        }
+    } catch (e) {
+        Toast.show('Network error', 'error');
+    } finally {
+        Utils.setLoading(btn, false);
+    }
+}
+
+async function testBot() {
+    const btn = document.getElementById('btn-test-bot');
+    Utils.setLoading(btn, true);
+    
+    const form = document.getElementById('settings-form');
+    const data = Object.fromEntries(new FormData(form));
+    
+    try {
+        const res = await fetch('/api/verify/bot', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (json.ok) {
+            Toast.show(`Success: ${json.result.username}`);
+        } else {
+            Toast.show('Bot connection failed', 'error');
+        }
+    } catch (e) {
+        Toast.show('Test failed', 'error');
+    } finally {
+        Utils.setLoading(btn, false);
+    }
+}
+
+function resetConfig() {
+    if (!confirm('Are you sure you want to RESET all settings? This action cannot be undone.')) return;
+    
+    fetch('/api/reset-config', { method: 'POST' })
+        .then(r => r.json())
+        .then(() => {
+            Toast.show('Reset complete');
+            setTimeout(() => window.location.reload(), 1000);
+        });
+}
+
+document.addEventListener('DOMContentLoaded', initData);
 </script>
 {% endblock %}

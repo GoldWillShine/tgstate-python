@@ -3,92 +3,90 @@
 {% block title %}Images - tgState{% endblock %}
 
 {% block content %}
-<div class="container">
-    {% if not cfg.bot_ready %}
-    <div class="ui-card ui-empty" style="margin-bottom: 14px;">
-        <h2>功能未启用</h2>
-        <p>上传/删除需要配置 BOT_TOKEN 与 CHANNEL_NAME。</p>
-        {% if cfg.missing %}
-        <ul>
-            {% for item in cfg.missing %}
-            <li>{{ item }} 未填写</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-        <div class="ui-btns" style="margin-top: 12px;">
-            <a class="ui-btn primary" href="/settings">去 Settings</a>
-        </div>
-    </div>
-    {% endif %}
-
-    <h1>Images</h1>
-    
-    <!-- Upload Area -->
-    <div class="upload-container">
-        <div class="upload-area-dashed" id="upload-zone" data-bot-ready="{{ 1 if cfg.bot_ready else 0 }}">
-            <p>拖拽图片到这里，或 <span>选择图片</span></p>
-            <input type="file" id="file-picker" hidden multiple accept="image/*">
-        </div>
-        <div class="progress-area" id="prog-zone"></div>
-        <div class="done-area" id="done-zone"></div>
-    </div>
-
-    <!-- Controls -->
-    <div class="controls-bar">
-        <div class="search-container">
-            <input type="text" id="file-search" placeholder="Search images..." class="search-input">
-        </div>
-        
-        <div class="batch-actions">
-             <div class="link-format-selector" style="display: flex; gap: 8px; margin-right: 16px;">
-                <button class="btn active format-option" data-format="url">URL</button>
-                <button class="btn format-option" data-format="markdown">MD</button>
-                <button class="btn format-option" data-format="html">HTML</button>
+<div style="display: flex; flex-direction: column; gap: 24px;">
+    <!-- Header -->
+    <div class="flex-between">
+        <h1 style="font-size: 24px; font-weight: 700;">Images</h1>
+        <div style="display: flex; gap: 12px;">
+            <div class="input-group" style="margin-bottom: 0;">
+                <input type="text" id="file-search" class="input-field" placeholder="Search images..." style="width: 240px;">
             </div>
-            <button id="copy-links-btn" class="btn" disabled>Copy</button>
-            <button id="batch-delete-btn" class="btn btn-danger" disabled>Delete</button>
+        </div>
+    </div>
+
+    {% if not cfg.bot_ready %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </div>
+        <h3 class="empty-title">Setup Required</h3>
+        <p class="empty-desc">Bot token or Channel name is missing. Image operations are disabled.</p>
+        <a href="/settings" class="btn btn-primary">Go to Settings</a>
+    </div>
+    {% else %}
+    <!-- Upload Area -->
+    <div class="card" style="border-style: dashed; text-align: center; padding: 40px; cursor: pointer; transition: all 0.2s;" 
+         id="upload-zone" onclick="document.getElementById('file-picker').click()">
+        <input type="file" id="file-picker" hidden multiple accept="image/*">
+        <div style="color: var(--primary-color); margin-bottom: 12px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+        </div>
+        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Upload Images</h3>
+        <p style="color: var(--text-secondary); font-size: 14px;">Drag & drop or click to select</p>
+    </div>
+    
+    <!-- Progress Area -->
+    <div id="prog-zone" style="display: flex; flex-direction: column; gap: 12px;"></div>
+    <div id="done-zone" style="display: flex; flex-direction: column; gap: 12px;"></div>
+
+    <!-- Batch Actions -->
+    <div class="flex-between hidden" id="batch-actions-bar" style="background: var(--bg-surface-hover); padding: 12px 16px; border-radius: var(--radius-md);">
+        <span class="text-sm font-medium"><span id="selection-counter">0</span> selected</span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <div class="link-format-selector" style="display: flex; gap: 4px; margin-right: 8px;">
+                <button class="btn btn-ghost btn-sm active format-option" data-format="url" style="height: 32px; font-size: 12px;">URL</button>
+                <button class="btn btn-ghost btn-sm format-option" data-format="markdown" style="height: 32px; font-size: 12px;">MD</button>
+                <button class="btn btn-ghost btn-sm format-option" data-format="html" style="height: 32px; font-size: 12px;">HTML</button>
+            </div>
+            <button id="copy-links-btn" class="btn btn-secondary btn-sm" style="height: 32px; font-size: 13px;">Copy</button>
+            <button id="batch-delete-btn" class="btn btn-secondary btn-sm" style="height: 32px; font-size: 13px; color: var(--danger-color);">Delete</button>
         </div>
     </div>
 
     <!-- Image Grid -->
-    <div class="file-list-container"> <!-- Reuse container for selection logic -->
-        <!-- Hidden select all for logic compatibility -->
-        <input type="checkbox" id="select-all-checkbox" style="display:none;">
+    <div class="card" style="padding: 24px;">
+        <input type="checkbox" id="select-all-checkbox" style="display:none;"> <!-- Hidden logic hook -->
         
-        <div class="image-grid" id="file-list-disk">
+        <div class="file-list" id="file-list-disk" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px;">
             {% if files %}
                 {% for file in files %}
-                <div class="image-card file-item-disk" id="file-item-{{ file.file_id.replace(':', '-') }}" data-file-id="{{ file.file_id }}" data-file-url="/d/{{ file.file_id }}/{{ file.filename }}" data-filename="{{ file.filename }}">
-                    <div class="image-thumb-wrapper">
-                         <!-- In a real app, we'd have a thumbnail endpoint. Using direct link for now -->
-                        <img src="/d/{{ file.file_id }}/{{ file.filename }}" loading="lazy" class="image-thumb" alt="{{ file.filename }}">
-                         <div style="position: absolute; top: 8px; left: 8px;">
-                            <input type="checkbox" class="file-checkbox" data-file-id="{{ file.file_id }}">
+                <div class="file-item" style="border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; background: var(--bg-body);" id="file-item-{{ file.file_id.replace(':', '-') }}" data-file-id="{{ file.file_id }}" data-file-url="/d/{{ file.file_id }}/{{ file.filename }}" data-filename="{{ file.filename }}">
+                    <div style="position: relative; aspect-ratio: 16/9; background: #000;">
+                        <img src="/d/{{ file.file_id }}/{{ file.filename }}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain;" alt="{{ file.filename }}">
+                        <div style="position: absolute; top: 8px; left: 8px;">
+                            <input type="checkbox" class="file-checkbox" data-file-id="{{ file.file_id }}" style="width: 16px; height: 16px; cursor: pointer;">
                         </div>
                     </div>
-                    <div class="image-info">
-                        <div class="image-name" title="{{ file.filename }}">{{ file.filename }}</div>
-                        <div class="image-meta">{{ "%.2f" | format(file.filesize / (1024*1024)) }} MB</div>
-                    </div>
-                    <div class="image-actions">
-                        <button class="action-btn copy-link-btn" data-tooltip="Copy" onclick="copyLink('/d/{{ file.file_id }}/{{ file.filename }}')">Copy</button>
-                        <button class="action-btn delete" data-tooltip="Delete" onclick="deleteFile('{{ file.file_id }}')">Delete</button>
+                    <div style="padding: 12px;">
+                        <div class="text-sm font-medium" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;" title="{{ file.filename }}">{{ file.filename }}</div>
+                        <div class="text-sm text-muted" style="margin-bottom: 12px;">{{ "%.2f" | format(file.filesize / (1024*1024)) }} MB</div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary btn-sm copy-link-btn" style="flex: 1; height: 32px;" onclick="copyLink('/d/{{ file.file_id }}/{{ file.filename }}')">Copy</button>
+                            <button class="btn btn-secondary btn-sm delete" style="height: 32px; color: var(--danger-color);" onclick="deleteFile('{{ file.file_id }}')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-                 <div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-tertiary);">
+                <div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-tertiary);">
                     <p>No images found</p>
                 </div>
             {% endif %}
         </div>
     </div>
+    {% endif %}
 </div>
-
-<script src="{{ url_for('static', path='/js/main.js') }}?v=3.0"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('nav-image-hosting')?.classList.add('active');
-});
-</script>
+<script src="{{ url_for('static', path='/js/main.js') }}?v=4.0"></script>
 {% endblock %}

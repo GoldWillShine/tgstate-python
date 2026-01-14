@@ -38,13 +38,8 @@ async def auth_middleware(request: Request, call_next):
 
     request_path = request.url.path
     protected_api_paths = (
-        "/api/app-config",
-        "/api/app-config/save",
-        "/api/app-config/apply",
-        "/api/reset-config",
-        "/api/set-password",
-        "/api/verify/bot",
-        "/api/verify/channel",
+        "/api/upload",
+        "/api/delete",
     )
     if request_path in protected_api_paths:
         session_password = request.cookies.get("password")
@@ -55,10 +50,14 @@ async def auth_middleware(request: Request, call_next):
             )
 
     # 定义需要密码保护的页面路径
-    protected_paths = ["/", "/settings", "/image_hosting"]
-    
+    # settings 页面现在是公开的，但在页面内会提示状态
+    protected_paths = ["/image_hosting"]
+    if request_path == "/" and active_password:
+        # 只有在已设置密码的情况下，根路径才需要保护
+        protected_paths.append("/")
+
     # 定义公共路径，这些路径不应被拦截
-    public_paths = ["/pwd", "/static", "/api", "/d"]
+    public_paths = ["/pwd", "/static", "/api", "/d", "/welcome", "/settings"]
     
     # 检查请求是否是公共路径
     is_public = any(request_path.startswith(p) for p in public_paths)

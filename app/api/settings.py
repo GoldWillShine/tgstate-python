@@ -71,9 +71,10 @@ def _merge_config(existing: dict, incoming: dict) -> dict:
         if v is None:
             continue
         if isinstance(v, str):
-            if not v.strip():
-                continue
-        merged[k] = v
+            # 允许保存空字符串（用于清空配置）
+            merged[k] = v.strip()
+        else:
+            merged[k] = v
     return merged
 
 
@@ -83,6 +84,7 @@ async def save_config_only(payload: AppConfigRequest, request: Request):
     incoming = payload.model_dump()
     merged = _merge_config(existing, incoming)
 
+    # Partial validation is implicit in _validate_config (it skips empty values)
     _validate_config(merged)
     database.save_app_settings_to_db(merged)
     logger.info("配置已保存（未应用）")
@@ -97,6 +99,8 @@ async def save_and_apply(payload: AppConfigRequest, request: Request):
     _validate_config(merged)
     database.save_app_settings_to_db(merged)
 
+    # 只有当 BOT_TOKEN 和 CHANNEL_NAME 都存在时才尝试启动 Bot
+    # 但 Web 设置无论如何都会保存生效
     await apply_runtime_settings(request.app, start_bot=True)
     logger.info("配置已保存并应用")
 
@@ -111,8 +115,13 @@ async def save_and_apply(payload: AppConfigRequest, request: Request):
             },
         },
     )
-    if (merged.get("PASS_WORD") or "").strip():
-        resp.set_cookie(key="password", value=merged["PASS_WORD"], httponly=True, samesite="Lax")
+    
+    pwd = (merged.get("PASS_WORD") or "").strip()
+    if pwd:
+        resp.set_cookie(key="password", value=pwd, httponly=True, samesite="Lax")
+    else:
+        resp.delete_cookie("password")
+        
     return resp
 
 
@@ -158,9 +167,9 @@ async def verify_bot(payload: VerifyRequest):
     bot = telegram.Bot(token=token, request=req)
     try:
         me = await bot.get_me()
-        return {"status": "ok", "available": True, "bot_username": getattr(me, "username", None)}
+        return {"status": "ok", "ok": True, "available": True, "result": {"username": getattr(me, "username", None)}}
     except Exception as e:
-        return {"status": "ok", "available": False, "message": str(e)}
+        return {"status": "ok", "ok": False, "available": False, "message": str(e)}
 
 
 @router.post("/api/verify/channel")
