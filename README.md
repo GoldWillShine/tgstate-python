@@ -8,20 +8,24 @@
 
 ## ✅ 一键安装 / 一键更新（保留数据，推荐）
 
+[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/2Q6B0K?referralCode=adminlove520)
+
+> **关于 Zeabur 部署**：请参考 [Zeabur 部署指南](docs/zeabur.md)，务必配置挂载 `/app/data` 目录以防数据丢失。
+
 默认端口 **8000**（最通用）
 ```bash
-docker volume create tgstate-data >/dev/null 2>&1; docker rm -f tgstate >/dev/null 2>&1 || true; docker pull ghcr.io/buyi06/tgstate-python:latest && docker run -d --name tgstate --restart unless-stopped -p 8000:8000 -v tgstate-data:/app/data ghcr.io/buyi06/tgstate-python:latest
+docker volume create tgstate-data >/dev/null 2>&1; docker rm -f tgstate >/dev/null 2>&1 || true; docker pull ghcr.io/adminlove520/tgstate-python:latest && docker run -d --name tgstate --restart unless-stopped -p 8000:8000 -v tgstate-data:/app/data ghcr.io/adminlove520/tgstate-python:latest
 ```
 
 自定义端口 **15767**（可选）
 ```bash
-docker volume create tgstate-data >/dev/null 2>&1; docker rm -f tgstate >/dev/null 2>&1 || true; docker pull ghcr.io/buyi06/tgstate-python:latest && docker run -d --name tgstate --restart unless-stopped -p 15767:8000 -v tgstate-data:/app/data ghcr.io/buyi06/tgstate-python:latest
+docker volume create tgstate-data >/dev/null 2>&1; docker rm -f tgstate >/dev/null 2>&1 || true; docker pull ghcr.io/adminlove520/tgstate-python:latest && docker run -d --name tgstate --restart unless-stopped -p 15767:8000 -v tgstate-data:/app/data ghcr.io/adminlove520/tgstate-python:latest
 ```
 
 ## 🧨 彻底重装（清空所有数据，不可逆）
 
 ```bash
-docker rm -f tgstate >/dev/null 2>&1 || true; docker volume rm tgstate-data >/dev/null 2>&1 || true; docker volume create tgstate-data >/dev/null 2>&1; docker pull ghcr.io/buyi06/tgstate-python:latest && docker run -d --name tgstate --restart unless-stopped -p 15767:8000 -v tgstate-data:/app/data ghcr.io/buyi06/tgstate-python:latest
+docker rm -f tgstate >/dev/null 2>&1 || true; docker volume rm tgstate-data >/dev/null 2>&1 || true; docker volume create tgstate-data >/dev/null 2>&1; docker pull ghcr.io/adminlove520/tgstate-python:latest && docker run -d --name tgstate --restart unless-stopped -p 15767:8000 -v tgstate-data:/app/data ghcr.io/adminlove520/tgstate-python:latest
 ```
 
 ---
