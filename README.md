@@ -22,6 +22,25 @@ docker volume create tgstate-data >/dev/null 2>&1; docker rm -f tgstate >/dev/nu
 docker volume create tgstate-data >/dev/null 2>&1; docker rm -f tgstate >/dev/null 2>&1 || true; docker pull ghcr.io/adminlove520/tgstate-python:latest && docker run -d --name tgstate --restart unless-stopped -p 15767:8000 -v tgstate-data:/app/data ghcr.io/adminlove520/tgstate-python:latest
 ```
 
+## 🐳 Docker Compose 部署（推荐本地开发/如果你有 docker-compose.yml）
+
+如果你下载了本项目的 `docker-compose.yml` 文件，可以直接使用以下命令启动：
+
+```bash
+# 1. 下载 docker-compose.yml (如果还没有)
+# wget https://raw.githubusercontent.com/adminlove520/tgstate-python/main/docker-compose.yml
+
+# 2. 修改 .env (可选，或者直接修改 docker-compose.yml 里的环境变量)
+
+# 3. 启动
+docker compose up -d
+
+# 4. 查看日志
+docker compose logs -f
+```
+
+默认端口为 `8000`，数据挂载在当前目录的 `./data`。
+
 ## 🧨 彻底重装（清空所有数据，不可逆）
 
 ```bash

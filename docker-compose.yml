@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  tgstate:
+    image: ghcr.io/adminlove520/tgstate-python:latest
+    container_name: tgstate-python
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - CHANNEL_NAME=${CHANNEL_NAME}
+      - PASS_WORD=${PASS_WORD}
+      - BASE_URL=${BASE_URL}
+      - PICGO_API_KEY=${PICGO_API_KEY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - HTTP_PROXY=${HTTP_PROXY}
+    # 如果你是国内环境，可能需要把下面的注释打开，让容器走宿主机的代理
+    # network_mode: "host" 
