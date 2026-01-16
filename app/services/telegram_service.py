@@ -43,7 +43,7 @@ class TelegramService:
         self.bot = telegram.Bot(token=bot_token, request=request)
         self.channel_name = channel_name
 
-    async def _upload_chunk(self, chunk_data: bytes, chunk_name: str) -> str | None:
+    async def _upload_chunk(self, chunk_data: bytes, chunk_name: str) -> Optional[str]:
         """一个上传单个数据块的辅助函数。"""
         try:
             with io.BytesIO(chunk_data) as document_chunk:
