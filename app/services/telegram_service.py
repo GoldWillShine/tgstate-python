@@ -186,7 +186,7 @@ class TelegramService:
         
         return None
 
-    async def get_download_url(self, file_id: str) -> str | None:
+    async def get_download_url(self, file_id: str) -> Optional[str]:
         """
         为给定的 file_id 获取临时下载链接。
 
@@ -203,7 +203,7 @@ class TelegramService:
             logger.error("从 Telegram 获取下载链接时出错: %s", e)
             return None
 
-    async def try_get_manifest_original_filename(self, manifest_file_id: str) -> tuple[bool, str | None, str | None]:
+    async def try_get_manifest_original_filename(self, manifest_file_id: str) -> tuple[bool, Optional[str], Optional[str]]:
         download_url = await self.get_download_url(manifest_file_id)
         if not download_url:
             return False, None, "无法获取下载链接（文件可能已过期或不存在）"

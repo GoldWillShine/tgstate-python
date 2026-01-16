@@ -173,7 +173,7 @@ def delete_file_metadata(file_id: str) -> bool:
         finally:
             conn.close()
 
-def delete_file_by_message_id(message_id: int) -> str | None:
+def delete_file_by_message_id(message_id: int) -> Optional[str]:
     """
     根据 message_id 从数据库中删除文件元数据，并返回其 file_id。
     因为一个消息ID只对应一个文件，所以我们可以这样做。
