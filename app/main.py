@@ -38,11 +38,11 @@ async def security_headers_middleware(request: Request, call_next):
     """  
     Add security headers to all responses.  
     """  
-    # 修复代理头：识别 X-Forwarded-Proto  
+    # Handle X-Forwarded-Proto header from proxy  
     if request.headers.get("x-forwarded-proto") == "https":  
         request._scope["scheme"] = "https"  
       
-    response = await call_next(request) 
+    response = await call_next(request)  
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
