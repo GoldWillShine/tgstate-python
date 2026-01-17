@@ -101,15 +101,15 @@ async def auth_middleware(request: Request, call_next):
 
     # 保护 API
     # 包含了上传、删除、文件列表、配置管理等敏感接口
-    protected_api_prefixes = (
-        "/api/upload"， 
-        "/api/delete"， 
-        "/api/files"， 
-        "/api/batch_delete", 
-        "/api/app-config", 
-        "/api/reset-config",
-        "/api/set-password" 
-    )
+        protected_api_prefixes = (  
+        "/api/upload",   
+        "/api/delete",   
+        "/api/files",   
+        "/api/batch_delete",   
+        "/api/app-config",   
+        "/api/reset-config",  
+        "/api/set-password"   
+    )  
     
     if any(request_path.startswith(prefix) for prefix in protected_api_prefixes):
         if not is_authenticated:
@@ -120,7 +120,7 @@ async def auth_middleware(request: Request, call_next):
 
     # 保护页面
     # 明确列出需要登录才能访问的页面
-    protected_pages = ["/"， "/image_hosting"， "/files", "/settings"]
+    protected_pages = ["/", "/image_hosting", "/files", "/settings"]
     
     # 登录页特殊处理：如果已登录，跳转到主页
     if request_path == "/login" or request_path == "/pwd":
