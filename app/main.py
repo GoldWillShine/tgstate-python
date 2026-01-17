@@ -4,7 +4,6 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from starlette.middleware.trustedhost import TrustedHostMiddleware 
-from starlette.middleware.forwarded import ForwardedAllowAllMiddleware 
 from fastapi.responses import RedirectResponse, JSONResponse
 
 # 导入我们的新生命周期管理器和路由
@@ -27,9 +26,6 @@ app = FastAPI(
     description="一个基于 Telegram 的私有文件存储系统。",
     version="2.0.0"
 )
-# 添加 ForwardedAllowAllMiddleware 来处理代理头  
-# 这使得 FastAPI 能够正确识别 HTTPS 和原始请求信息  
-app.add_middleware(ForwardedAllowAllMiddleware)  
 # 添加 TrustedHostMiddleware 来处理代理头  
 app.add_middleware(  
     TrustedHostMiddleware,  
@@ -37,12 +33,16 @@ app.add_middleware(
 )  
 COOKIE_NAME = "tgstate_session"  
 
-@app.middleware("http")
-async def security_headers_middleware(request: Request, call_next):
-    """
-    Add security headers to all responses.
-    """
-    response = await call_next(request)
+@app.middleware("http")  
+async def security_headers_middleware(request: Request, call_next):  
+    """  
+    Add security headers to all responses.  
+    """  
+    # 修复代理头：识别 X-Forwarded-Proto  
+    if request.headers.get("x-forwarded-proto") == "https":  
+        request._scope["scheme"] = "https"  
+      
+    response = await call_next(request) 
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
@@ -102,9 +102,9 @@ async def auth_middleware(request: Request, call_next):
     # 保护 API
     # 包含了上传、删除、文件列表、配置管理等敏感接口
     protected_api_prefixes = (
-        "/api/upload", 
-        "/api/delete", 
-        "/api/files", 
+        "/api/upload"， 
+        "/api/delete"， 
+        "/api/files"， 
         "/api/batch_delete", 
         "/api/app-config", 
         "/api/reset-config",
@@ -120,7 +120,7 @@ async def auth_middleware(request: Request, call_next):
 
     # 保护页面
     # 明确列出需要登录才能访问的页面
-    protected_pages = ["/", "/image_hosting", "/files", "/settings"]
+    protected_pages = ["/"， "/image_hosting"， "/files", "/settings"]
     
     # 登录页特殊处理：如果已登录，跳转到主页
     if request_path == "/login" or request_path == "/pwd":
