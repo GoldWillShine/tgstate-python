@@ -20,17 +20,18 @@ logging.basicConfig(
 )
 
 # 使用集成的 lifespan 管理器创建 FastAPI 应用
-app = FastAPI(
-    lifespan=lifespan,
-    title="tgState",
-    description="一个基于 Telegram 的私有文件存储系统。",
-    version="2.0.0"
-)
-# 添加 TrustedHostMiddleware 来处理代理头  
+app = FastAPI(  
+    lifespan=lifespan,  
+    title="tgState",  
+    description="一个基于 Telegram 的私有文件存储系统。",  
+    version="2.0.0",  
+    root_path=""  
+)  
+# Trust proxy headers  
 app.add_middleware(  
     TrustedHostMiddleware,  
     allowed_hosts=["*"],  
-)  
+)    
 COOKIE_NAME = "tgstate_session"  
 
 @app.middleware("http")  
@@ -38,24 +39,19 @@ async def security_headers_middleware(request: Request, call_next):
     """  
     Add security headers to all responses.  
     """  
-    # Handle X-Forwarded-Proto header from proxy  
-    if request.headers.get("x-forwarded-proto") == "https":  
-        request._scope["scheme"] = "https"  
-      
     response = await call_next(request)  
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["Referrer-Policy"] = "no-referrer"
-    
-    # 简单的 Permissions-Policy
-    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
-    
-    # Strict-Transport-Security (HSTS)
-    # Only if HTTPS
-    if request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https":
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        
-    return response
+    response.headers["X-Content-Type-Options"] = "nosniff"  
+    response.headers["X-Frame-Options"] = "DENY"  
+    response.headers["Referrer-Policy"] = "no-referrer"  
+      
+    # Permissions-Policy  
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=(), payment=(), usb=()"  
+      
+    # Strict-Transport-Security (HSTS)  
+    if request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https":  
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"  
+          
+    return response  
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
@@ -122,7 +118,7 @@ async def auth_middleware(request: Request, call_next):
     protected_pages = ["/", "/image_hosting", "/files", "/settings"]
     
     # 登录页特殊处理：如果已登录，跳转到主页
-    if request_path == "/login" or request_path == "/pwd":
+    if request_path == "/login" 或 request_path == "/pwd":
         if is_authenticated:
             return RedirectResponse(url="/", status_code=307)
         # 未登录则允许访问登录页
