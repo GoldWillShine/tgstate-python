@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
+from starlette.middleware.trustedhost import TrustedHostMiddleware  
 from fastapi.responses import RedirectResponse, JSONResponse
 
 # 导入我们的新生命周期管理器和路由
@@ -25,7 +26,12 @@ app = FastAPI(
     description="一个基于 Telegram 的私有文件存储系统。",
     version="2.0.0"
 )
-
+# 添加 TrustedHostMiddleware 来处理代理头  
+# 这使得 FastAPI 能够正确识别 HTTPS 和原始请求信息  
+app.add_middleware(  
+    TrustedHostMiddleware,  
+    allowed_hosts=["*"],  
+)
 COOKIE_NAME = "tgstate_session"
 
 @app.middleware("http")
