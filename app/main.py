@@ -92,23 +92,22 @@ async def auth_middleware(request: Request, call_next):
     session_id = request.cookies.get(COOKIE_NAME)
     is_authenticated = False
     
-    if session_id:
-        # 简单验证：Cookie 内容即为密码 (与 auth.py 逻辑一致)
-        # 注意：这里假设 Cookie 由于 HttpOnly/SameSite 保护相对安全
-        active_password = get_active_password()
-        if active_password and session_id == active_password:
-            is_authenticated = True
-
-    # 保护 API
-    # 包含了上传、删除、文件列表、配置管理等敏感接口
-        protected_api_prefixes = (  
-        "/api/upload",   
-        "/api/delete",   
-        "/api/files",   
-        "/api/batch_delete",   
-        "/api/app-config",   
+    if session_id:  
+        # 简单验证：Cookie 内容即为密码 (与 auth.py 逻辑一致)  
+        # 注意：这里假设 Cookie 由于 HttpOnly/SameSite 保护相对安全  
+        active_password = get_active_password()  
+        if active_password and session_id == active_password:  
+            is_authenticated = True  
+    # 保护 API  
+    # 包含了上传、删除、文件列表、配置管理等敏感接口  
+    protected_api_prefixes = (  
+        "/api/upload",  
+        "/api/delete",  
+        "/api/files",  
+        "/api/batch_delete",  
+        "/api/app-config",  
         "/api/reset-config",  
-        "/api/set-password"   
+        "/api/set-password"  
     )  
     
     if any(request_path.startswith(prefix) for prefix in protected_api_prefixes):
