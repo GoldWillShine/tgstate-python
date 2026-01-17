@@ -3,7 +3,6 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
-from starlette.middleware.trustedhost import TrustedHostMiddleware 
 from fastapi.responses import RedirectResponse, JSONResponse
 
 # 导入我们的新生命周期管理器和路由
@@ -20,38 +19,34 @@ logging.basicConfig(
 )
 
 # 使用集成的 lifespan 管理器创建 FastAPI 应用
-app = FastAPI(  
-    lifespan=lifespan,  
-    title="tgState",  
-    description="一个基于 Telegram 的私有文件存储系统。",  
-    version="2.0.0",  
-    root_path=""  
-)  
-# Trust proxy headers  
-app.add_middleware(  
-    TrustedHostMiddleware,  
-    allowed_hosts=["*"],  
-)    
-COOKIE_NAME = "tgstate_session"  
+app = FastAPI(
+    lifespan=lifespan,
+    title="tgState",
+    description="一个基于 Telegram 的私有文件存储系统。",
+    version="2.0.0"
+)
 
-@app.middleware("http")  
-async def security_headers_middleware(request: Request, call_next):  
-    """  
-    Add security headers to all responses.  
-    """  
-    response = await call_next(request)  
-    response.headers["X-Content-Type-Options"] = "nosniff"  
-    response.headers["X-Frame-Options"] = "DENY"  
-    response.headers["Referrer-Policy"] = "no-referrer"  
-      
-    # Permissions-Policy  
-    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=(), payment=(), usb=()"  
-      
-    # Strict-Transport-Security (HSTS)  
-    if request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https":  
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"  
-          
-    return response  
+COOKIE_NAME = "tgstate_session"
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    """
+    Add security headers to all responses.
+    """
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    
+    # 简单的 Permissions-Policy
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+    
+    # Strict-Transport-Security (HSTS)
+    # Only if HTTPS
+    if request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        
+    return response
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
@@ -88,23 +83,24 @@ async def auth_middleware(request: Request, call_next):
     session_id = request.cookies.get(COOKIE_NAME)
     is_authenticated = False
     
-    if session_id:  
-        # 简单验证：Cookie 内容即为密码 (与 auth.py 逻辑一致)  
-        # 注意：这里假设 Cookie 由于 HttpOnly/SameSite 保护相对安全  
-        active_password = get_active_password()  
-        if active_password and session_id == active_password:  
-            is_authenticated = True  
-    # 保护 API  
-    # 包含了上传、删除、文件列表、配置管理等敏感接口  
-    protected_api_prefixes = (  
-        "/api/upload",  
-        "/api/delete",  
-        "/api/files",  
-        "/api/batch_delete",  
-        "/api/app-config",  
-        "/api/reset-config",  
-        "/api/set-password"  
-    )  
+    if session_id:
+        # 简单验证：Cookie 内容即为密码 (与 auth.py 逻辑一致)
+        # 注意：这里假设 Cookie 由于 HttpOnly/SameSite 保护相对安全
+        active_password = get_active_password()
+        if active_password and session_id == active_password:
+            is_authenticated = True
+
+    # 保护 API
+    # 包含了上传、删除、文件列表、配置管理等敏感接口
+    protected_api_prefixes = (
+        "/api/upload", 
+        "/api/delete", 
+        "/api/files", 
+        "/api/batch_delete", 
+        "/api/app-config", 
+        "/api/reset-config",
+        "/api/set-password" 
+    )
     
     if any(request_path.startswith(prefix) for prefix in protected_api_prefixes):
         if not is_authenticated:
@@ -118,7 +114,7 @@ async def auth_middleware(request: Request, call_next):
     protected_pages = ["/", "/image_hosting", "/files", "/settings"]
     
     # 登录页特殊处理：如果已登录，跳转到主页
-    if request_path == "/login" 或 request_path == "/pwd":
+    if request_path == "/login" or request_path == "/pwd":
         if is_authenticated:
             return RedirectResponse(url="/", status_code=307)
         # 未登录则允许访问登录页
